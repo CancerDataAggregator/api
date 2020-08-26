@@ -18,7 +18,9 @@ of web viewers. It is a text based format and can also be read on its own_
 1. URL passed by client/browser should not be longer than 2048 characters to
    mitigate certain kinds of DDOS attacks ([1][url-length]). For this reason we use
    a query id when chaining queries and when referring to them, to avoid building
-  up a very long 
+   up a very long URL. We also use a POST operation even though it's operation
+   for idempotent queries is frowned upon. Arguably, most of the `/query` calls
+   will not be strictly idempotent since they cache queries. 
 
 
 [url-length]:
