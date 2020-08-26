@@ -1,0 +1,178 @@
+openapi: 3.0.0
+info:
+  description: API definition for the CDA
+  version: 1.0.0
+  title: CDA API
+  contact:
+    email: kaushik.ghose@sevenbridges.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: admin
+    description: Calls meant purely for administrative tasks 
+  - name: meta
+    description: Retrieve meta information about CDA data or CDA itself
+  - name: data
+    description: Retrieve the data stored in the CDA.
+
+paths:
+  /about:
+    get:
+      tags:
+        - meta
+      summary: Brief information about the CDA
+      operationId: about
+      description: |
+        Return information about the CDA repository
+      responses:
+        '200':
+          description: CDA information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/about'    
+                      
+        '400':
+          description: CDA service unavailable        
+
+  /status:
+    get:
+      tags:
+        - meta
+      summary: Current CDA service status
+      operationId: status
+      description: |
+        Return a succinct string indicating current CDA status
+      responses:
+        '200':
+          description: CDA status
+          content:
+            text/plain:
+              schema:
+                type: string
+                enum: [active, maintenance, overloaded]
+
+  /query:
+    post:
+      tags:
+        - data
+      summary: Start query
+      operationId: query
+      description: |
+        Setup a query and, depending on the options, return the results, the
+        summary results, the analysis of the query, or in case of an
+        asynchronous query, the analysis of the query and the query id. 
+
+      parameters:
+        - in: path
+          name: queryMode
+          description: |
+            How we want to process the query with this call.
+            - synchronous: return the result with this (blocking) call
+            - asynchronous: just return the query id. We'll fetch it with a
+              second, later, call to query.
+            - summary: Return summary results.
+            - analysis: Return an analysis of the query .
+          required: true
+          schema:
+            type: string
+            enum: [synchronous, asynchronous, summary, analysis]
+
+      requestBody:
+        description: |
+          The query string plus any previous query ids we want to intersect or
+          operate on. Passing just previous query id(s), with an empty query,
+          indicates that we want to perform the given operation on the
+          intersection of the given previous query ids.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Query'
+                      
+      responses:
+        '200':
+          description: Results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+
+  /querystatus:
+    get:
+      tags:
+        - data
+      summary: Status of query
+      operationId: queryStatus
+      description: |
+        Return a succinct string indicating status of a query
+      responses:
+        '200':
+          description: Query status
+          content:
+            text/plain:
+              schema:
+                type: string
+                enum: [nosuchquery, draft, running, complete, error]
+
+servers:
+  - url: 'https://virtserver.swaggerhub.com/CDA/1.0.0'
+components:
+  schemas:
+
+    about:
+      type: object
+      properties:
+        version:
+          type: string
+        datasets:
+          type: array
+          items:
+            $ref: '#/components/schemas/dataset-meta'
+
+    dataset-meta:
+      type: object
+      properties:
+        name: 
+          type: string
+        version:
+          type: string
+        lastUpdate:
+          type: string
+          format: date-time
+
+    Query:
+      type: object
+      required:
+        - format
+      properties:
+        format:
+          $ref: '#/components/schemas/query-format'
+        intersect:
+          type: array
+          items:
+            type: string
+            format: uuid
+        query:
+          type: string
+
+    query-format:
+      description: Query format
+      type: string
+      enum: [fhir, sql]
+
+    Result:
+      type: object
+      required:
+        - queryid
+      properties:
+        queryid:
+          type: string
+          format: uuid
+        summary:
+          type: object
+        analysis:
+          type: object
+        result:
+          type: object
