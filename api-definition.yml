@@ -53,12 +53,12 @@ paths:
                 type: string
                 enum: [active, maintenance, overloaded]
 
-  /query:
+  /query/run:
     post:
       tags:
         - data
       summary: Start query
-      operationId: query
+      operationId: queryRun
       description: |
         Setup a query and, depending on the options, return the results, the
         summary results, the analysis of the query, or in case of an
@@ -99,7 +99,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Result'
 
-  /querystatus:
+  /query/status:
     get:
       tags:
         - data
@@ -115,6 +115,31 @@ paths:
               schema:
                 type: string
                 enum: [nosuchquery, draft, running, complete, error]
+
+  /query/object/{uuid}:
+    get:
+      tags:
+        - data
+      summary: Query object
+      operationId: queryObject
+      description: |
+        Return a JSON with the query object corresponding to this uuid
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+
+      responses:
+        '200':
+          description: Query object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Query'
+
 
 servers:
   - url: 'https://virtserver.swaggerhub.com/CDA/1.0.0'
@@ -151,6 +176,13 @@ components:
           $ref: '#/components/schemas/query-format'
         intersect:
           type: array
+          description: |
+            This is a list of previous queries we will filter with the given
+            query. This is a list because it notionally represents a logical
+            process of drilling down the data, finer and finer, with a sequence
+            of queries. However, existing, unrelated, queries can be chained
+            together too, that did not strat out strictly as a filters of the
+            other.             
           items:
             type: string
             format: uuid
