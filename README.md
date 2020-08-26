@@ -1,5 +1,10 @@
 # CDA API Design and design documents
 
+_The API is specified using [OpenAPI 3.0](http://spec.openapis.org/oas/v3.0.3)
+syntax. It can be pre-viewed using VS Code plugins, or on the web with a variety
+of web viewers. It is a text based format and can also be read on its own_
+
+
 1. Queries can be done in a multi-step manner, each step refining the last.
 1. Each query receives a unique query id which can be used when chaining
    multi-step queries, to retrieve the query or retrieve analyses about the
