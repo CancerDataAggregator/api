@@ -10,7 +10,7 @@ info:
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 tags:
   - name: admin
-    description: Calls meant purely for administrative tasks 
+    description: Calls meant for administrative tasks 
   - name: meta
     description: Retrieve meta information about CDA data or CDA itself
   - name: data
@@ -53,7 +53,7 @@ paths:
                 type: string
                 enum: [active, maintenance, overloaded]
 
-  /query/run:
+  /query/run/{queryMode}/{resultMode}:
     post:
       tags:
         - data
@@ -79,6 +79,19 @@ paths:
             type: string
             enum: [synchronous, asynchronous, summary, analysis]
 
+        - in: path
+          name: resultMode
+          description: |
+            Format of result (only applicable when full result is being
+            requested, not a summary or analysis)
+            - bigquery: return as bigquery tables 
+            - json: return as JSON
+            - tsv: return as a table in TSV
+          required: false
+          schema:
+            type: string
+            enum: [bigquery, json, tsv]
+
       requestBody:
         description: |
           The query string plus any previous query ids we want to intersect or
@@ -99,7 +112,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Result'
 
-  /query/status:
+  /query/status/{uuid}:
     get:
       tags:
         - data
@@ -107,6 +120,14 @@ paths:
       operationId: queryStatus
       description: |
         Return a succinct string indicating status of a query
+      parameters:
+        - in: path
+          name: uuid
+          schema:
+            type: string
+            format: uuid
+          required: true
+
       responses:
         '200':
           description: Query status
@@ -115,6 +136,31 @@ paths:
               schema:
                 type: string
                 enum: [nosuchquery, draft, running, complete, error]
+
+  /query/result/{uuid}:
+    get:
+      tags:
+        - data
+      summary: Fetch result of submitted query
+      operationId: queryResult
+      description: |
+        Fetch result of submitted query. Used for asynchronous calls.
+      parameters:
+        - in: path
+          name: uuid
+          schema:
+            type: string
+            format: uuid
+          required: true
+
+      responses:
+        '200':
+          description: Results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+
 
   /query/object/{uuid}:
     get:
