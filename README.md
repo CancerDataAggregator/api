@@ -1,12 +1,10 @@
 # CDA API Design and design documents
 
+[API specification in OpenAPI 3.0](api-definition.yml)
+
 _The API is specified using [OpenAPI 3.0](http://spec.openapis.org/oas/v3.0.3)
 syntax. It can be pre-viewed using VS Code plugins, or on the web with a variety
 of web viewers. It is a text based format and can also be read on its own_
-
-
-- [API specification in OpenAPI 3.0](api-definition.yml)
-
 
 ![](query-horizontal-extension.png)
 
@@ -25,7 +23,8 @@ of web viewers. It is a text based format and can also be read on its own_
    retrieving the status of the query.
 1. When sending a query, the POST method is used for security and query
    size/complexity considerations.
-
+1. Well typed objects are used to encapsulate the query. This eliminates
+   ambiguity in query components that might happen without typing.
 
 
 # Considerations and constraints
