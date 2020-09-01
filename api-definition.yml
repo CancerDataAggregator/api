@@ -53,56 +53,64 @@ paths:
                 type: string
                 enum: [active, maintenance, overloaded]
 
-  /query/run/{queryMode}/{resultMode}:
+  /columns:
+    get:
+      tags:
+        - meta
+      summary: Column names and descriptions
+      operationId: columns
+      description: |
+        List of column names and brief description and notes about them
+      responses:
+        '200':
+          description: CDA information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/columns-meta'    
+
+  /query/synchronous/{resultMode}:
     post:
       tags:
         - data
       summary: Start query
-      operationId: queryRun
+      operationId: querySynchronous
       description: |
-        Setup a query and, depending on the options, return the results, the
-        summary results, the analysis of the query, or in case of an
-        asynchronous query, the analysis of the query and the query id. 
+        Setup a query and block until the results are ready, then return results. 
 
       parameters:
-        - in: path
-          name: queryMode
-          description: |
-            How we want to process the query with this call.
-            - synchronous: return the result with this (blocking) call
-            - asynchronous: just return the query id. We'll fetch it with a
-              second, later, call to query.
-            - summary: Return summary results.
-            - analysis: Return an analysis of the query .
-          required: true
-          schema:
-            type: string
-            enum: [synchronous, asynchronous, summary, analysis]
 
         - in: path
           name: resultMode
           description: |
-            Format of result (only applicable when full result is being
-            requested, not a summary or analysis)
+            Format of returned rows:              
             - bigquery: return as bigquery tables 
             - json: return as JSON
             - tsv: return as a table in TSV
-          required: false
+          required: true
           schema:
             type: string
             enum: [bigquery, json, tsv]
 
       requestBody:
         description: |
-          The query string plus any previous query ids we want to intersect or
-          operate on. Passing just previous query id(s), with an empty query,
-          indicates that we want to perform the given operation on the
-          intersection of the given previous query ids.
+          The query S-expression and any pagination instructions
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Query'
+              type: object
+              properties:
+                query:
+                  $ref: '#/components/schemas/Query'
+                offset:
+                  type: integer
+                limit:
+                  type: integer
+                sort:
+                  type: array
+                  items: 
+                    $ref: '#/components/schemas/QuerySort' 
                       
       responses:
         '200':
@@ -111,6 +119,111 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Result'
+
+  /query/asynchronous:
+    post:
+      tags:
+        - data
+      summary: Start query
+      operationId: queryAsynchronous
+      description: |
+        Start a query but don't block. Return just queryid. 
+
+      requestBody:
+        description: |
+          The query S-expression
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Query'
+                      
+      responses:
+        '200':
+          description: Just the query id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryId'
+
+  /query/summary:
+    post:
+      tags:
+        - data
+      summary: Start query
+      operationId: querySummary
+      description: |
+        Setup a query and block until the results are ready, then only return result summary. 
+
+      requestBody:
+        description: |
+          The query S-expression
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Query'
+                      
+      responses:
+        '200':
+          description: Just the result summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultSummary'
+
+  /query/analyze:
+    post:
+      tags:
+        - data
+      summary: Return time/cost/size analysis of query
+      operationId: queryAnalyze
+      description: |
+        Register a query and return a time/cost/size analysis of the query. Return just queryid. 
+
+      requestBody:
+        description: |
+          The query S-expression.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Query'
+                      
+      responses:
+        '200':
+          description: Just the query id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryAnalysis'
+
+  /query/register:
+    post:
+      tags:
+        - data
+      summary: Register query
+      operationId: queryAsynchronous
+      description: |
+        Register the query but do not run it or analyze it. This is in
+        preparation for constructing a future, larger, query from pieces.
+
+      requestBody:
+        description: |
+          The query S-expression
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Query'
+                      
+      responses:
+        '200':
+          description: Just the query id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryId'
 
   /query/status/{uuid}:
     get:
@@ -124,8 +237,7 @@ paths:
         - in: path
           name: uuid
           schema:
-            type: string
-            format: uuid
+            $ref: '#/components/schemas/QueryId'
           required: true
 
       responses:
@@ -135,9 +247,9 @@ paths:
             text/plain:
               schema:
                 type: string
-                enum: [nosuchquery, draft, running, complete, error]
+                enum: [nosuchquery, registered, running, complete, error]
 
-  /query/result/{uuid}:
+  /query/result/{uuid}/{resultMode}:
     get:
       tags:
         - data
@@ -213,6 +325,26 @@ components:
           type: string
           format: date-time
 
+    columns-meta:
+      type: object
+      properties:
+        version:
+          type: string
+        description:
+          type: string
+        lastUpdate:
+          type: string
+          format: date-time
+        columns:
+          type: array
+          items:
+            type: object
+            properties:
+              name: 
+                type: string
+              description:
+                type: string
+
     Query:
       type: object
       required:
@@ -220,25 +352,61 @@ components:
       properties:
         format:
           $ref: '#/components/schemas/query-format'
-        intersect:
-          type: array
-          description: |
-            This is a list of previous queries we will filter with the given
-            query. This is a list because it notionally represents a logical
-            process of drilling down the data, finer and finer, with a sequence
-            of queries. However, existing, unrelated, queries can be chained
-            together too, that did not strat out strictly as a filters of the
-            other.             
-          items:
-            type: string
-            format: uuid
         query:
-          type: string
+          oneOf:
+            - $ref: '#/components/schemas/QueryNode'
+            - $ref: '#/components/schemas/FHIRQuery'
 
     query-format:
       description: Query format
       type: string
       enum: [fhir, sql]
+
+    QueryNode:
+      type: object
+      properties:
+        operator:
+          type: string
+          enum: ["<", ">", "=", "~", "AND", "OR", "NOT"]
+        l:
+          $ref: '#/components/schemas/QueryLeaf' 
+        r:
+          $ref: '#/components/schemas/QueryLeaf' 
+
+    QueryLeaf:
+      oneOf:
+        - type: string
+        - type: integer
+        - type: number
+        - $ref: '#/components/schemas/QueryId' 
+        - $ref: '#/components/schemas/QueryColumn' 
+        - $ref: '#/components/schemas/QueryNode'
+
+    QueryId:
+      type: string
+      format: uuid
+
+    QueryColumn:
+      type: object
+      properties:
+        namespace:
+          type: string
+        table:
+          type: string
+        column:
+          type: string
+
+    FHIRQuery:
+      type: object
+      
+    QuerySort:
+      type: object
+      properties:
+        column:
+          $ref: '#/components/schemas/QueryColumn'
+        order:
+          type: string
+          enum: [asc, desc]
 
     Result:
       type: object
@@ -246,8 +414,7 @@ components:
         - queryid
       properties:
         queryid:
-          type: string
-          format: uuid
+          $ref: '#/components/schemas/QueryId'
         summary:
           type: object
         analysis:
