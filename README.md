@@ -9,12 +9,43 @@ of web viewers. It is a text based format and can also be read on its own_
 ![](query-horizontal-extension.png)
 
 
+# Example API calls in pseudo code
+
+```
+query_id, result = cda.query.synchronous(query, result_params)
+```
+
+```
+query_id = cda.query.asynchronous(query)
+print(cda.query.status(query_id))
+...
+query_id, result = cda.query.result(query, result_params)
+```
+
+```
+query_id1, query_analysis = cda.query.analyze(query)
+query_id2, query_analysis = cda.query.analyze(query_that_contains_query1)
+query_id3, summary = cda.query.summary(query_that_contains_query1)
+# query_id3 = query_id2 becasue the CDA recognizes this as an existing, previous, query
+
+_, result = cda.query.result(query_that_contains_query1, result_params)
+```
+
+```
+query_id1, summary1 = cda.query.summary(query)
+query_id2, summary2 = cda.query.summary(query_that_contains_query1)
+_, result = cda.query.result(query_that_contains_query1, result_params)
+```
+
+
 # Query requirements
 1. Queries do not require users to perform joins manually. They can treat the
    entire dataset as one large table with fixed (harmonized, namespaced,
    standardized) column names such that queries can made in abstract fashion, expressed as S-expressions.
 1. Queries can span multiple CDA instances: table names are name spaced to
    enable this in a consistent and extendable fashion.
+1. Each query node (expression) can have a sorting clause. This is to enable
+   functions that limit the number of returned rows.
 
 # API requirements
 1. Queries can be done in a multi-step manner, each step refining the last.
@@ -39,6 +70,11 @@ of web viewers. It is a text based format and can also be read on its own_
 
 [url-length]:
 https://stackoverflow.com/questions/3091485/what-is-the-limit-on-querystring-get-url-parameters
+
+
+# Unresolved questions
+
+1. Should each query node have sorting instructions?
 
 
 # References
