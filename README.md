@@ -5,12 +5,27 @@ syntax. It can be pre-viewed using VS Code plugins, or on the web with a variety
 of web viewers. It is a text based format and can also be read on its own_
 
 
+- [API specification in OpenAPI 3.0](api-definition.yml)
+
+
+![](query-horizontal-extension.png)
+
+
+# Query requirements
+1. Queries do not require users to perform joins manually. They can treat the
+   entire dataset as one large table with fixed (harmonized, namespaced,
+   standardized) column names such that queries can made in abstract fashion, expressed as S-expressions.
+1. Queries can span multiple CDA instances: table names are name spaced to
+   enable this in a consistent and extendable fashion.
+
+# API requirements
 1. Queries can be done in a multi-step manner, each step refining the last.
-1. Each query receives a unique query id which can be used when chaining
-   multi-step queries, to retrieve the query or retrieve analyses about the
-   query, or in case of asynchronous queries, retrieve the status of the query.
-   This also mitigates issues related to URL lengths.
-1. POST is used for security and query size/complexity considerations    
+1. Each query receives a unique query id. This query id can be used in other
+   queries, when retrieving results, retrieving analysis of the query, or
+   retrieving the status of the query.
+1. When sending a query, the POST method is used for security and query
+   size/complexity considerations.
+
 
 
 # Considerations and constraints
