@@ -69,28 +69,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/columns-meta'    
 
-  /query/synchronous/{resultMode}:
+  /query/synchronous:
     post:
       tags:
         - data
-      summary: Start query
+      summary: Start query, block, return with results.
       operationId: querySynchronous
       description: |
         Setup a query and block until the results are ready, then return results. 
 
       parameters:
 
-        - in: path
-          name: resultMode
-          description: |
-            Format of returned rows:              
-            - bigquery: return as bigquery tables 
-            - json: return as JSON
-            - tsv: return as a table in TSV
+        - in: query
+          name: resultParams
           required: true
           schema:
-            type: string
-            enum: [bigquery, json, tsv]
+            $ref: '#/components/schemas/ResultParams'
 
       requestBody:
         description: |
@@ -99,19 +93,8 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                query:
-                  $ref: '#/components/schemas/Query'
-                offset:
-                  type: integer
-                limit:
-                  type: integer
-                sort:
-                  type: array
-                  items: 
-                    $ref: '#/components/schemas/QuerySort' 
-                      
+              $ref: '#/components/schemas/Query'
+                    
       responses:
         '200':
           description: Results
@@ -124,7 +107,7 @@ paths:
     post:
       tags:
         - data
-      summary: Start query
+      summary: Start query, return immediately.
       operationId: queryAsynchronous
       description: |
         Start a query but don't block. Return just queryid. 
@@ -150,7 +133,7 @@ paths:
     post:
       tags:
         - data
-      summary: Start query
+      summary: Start query, block, return only summary.
       operationId: querySummary
       description: |
         Setup a query and block until the results are ready, then only return result summary. 
@@ -170,16 +153,22 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResultSummary'
+                type: object
+                properties:
+                  queryid:
+                    $ref: '#/components/schemas/QueryId'
+                  analysis:
+                    $ref: '#/components/schemas/ResultSummary'
 
   /query/analyze:
     post:
       tags:
         - data
-      summary: Return time/cost/size analysis of query
+      summary: Return time/cost/size analysis of query without executing.
       operationId: queryAnalyze
       description: |
-        Register a query and return a time/cost/size analysis of the query. Return just queryid. 
+        Register a query and return a time/cost/size analysis of the query. Do
+        not run the query.
 
       requestBody:
         description: |
@@ -192,18 +181,23 @@ paths:
                       
       responses:
         '200':
-          description: Just the query id
+          description: Query time/cost/space analysis
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/QueryAnalysis'
+                type: object
+                properties:
+                  queryid:
+                    $ref: '#/components/schemas/QueryId'
+                  analysis:
+                    $ref: '#/components/schemas/QueryAnalysis'
 
   /query/register:
     post:
       tags:
         - data
       summary: Register query
-      operationId: queryAsynchronous
+      operationId: queryRegister
       description: |
         Register the query but do not run it or analyze it. This is in
         preparation for constructing a future, larger, query from pieces.
@@ -249,21 +243,26 @@ paths:
                 type: string
                 enum: [nosuchquery, registered, running, complete, error]
 
-  /query/result/{uuid}/{resultMode}:
+  /query/result/{uuid}:
     get:
       tags:
         - data
       summary: Fetch result of submitted query
       operationId: queryResult
       description: |
-        Fetch result of submitted query. Used for asynchronous calls.
+        Fetch result of submitted query. Pagination URLs will refer to this endpoint
       parameters:
         - in: path
           name: uuid
           schema:
-            type: string
-            format: uuid
+            $ref: '#/components/schemas/QueryId'
           required: true
+
+        - in: query
+          name: resultParams
+          required: true
+          schema:
+            $ref: '#/components/schemas/ResultParams'
 
       responses:
         '200':
@@ -278,7 +277,7 @@ paths:
     get:
       tags:
         - data
-      summary: Query object
+      summary: Return query object
       operationId: queryObject
       description: |
         Return a JSON with the query object corresponding to this uuid
@@ -287,8 +286,7 @@ paths:
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            $ref: '#/components/schemas/QueryId'
 
       responses:
         '200':
@@ -346,16 +344,17 @@ components:
                 type: string
 
     Query:
-      type: object
-      required:
-        - format
-      properties:
-        format:
-          $ref: '#/components/schemas/query-format'
-        query:
-          oneOf:
-            - $ref: '#/components/schemas/QueryNode'
-            - $ref: '#/components/schemas/FHIRQuery'
+      $ref: '#/components/schemas/QueryNode'  
+      # type: object
+      # required:
+      #   - format
+      # properties:
+      #   format:
+      #     $ref: '#/components/schemas/query-format'
+      #   query:
+      #     oneOf:
+      #       - $ref: '#/components/schemas/QueryNode'
+      #       - $ref: '#/components/schemas/FHIRQuery'
 
     query-format:
       description: Query format
@@ -367,7 +366,9 @@ components:
       properties:
         operator:
           type: string
-          enum: ["<", ">", "=", "~", "AND", "OR", "NOT"]
+          enum: ["<", ">", "=", "~", "AND", "OR", "NOT", "LIMIT"]
+        sort:
+          $ref: '#/components/schemas/QuerySort'
         l:
           $ref: '#/components/schemas/QueryLeaf' 
         r:
@@ -408,6 +409,30 @@ components:
           type: string
           enum: [asc, desc]
 
+    ResultParams:
+      type: object
+      properties:
+        queryid:
+          $ref: '#/components/schemas/QueryId'
+        format:
+          description: |
+            Format of returned rows:              
+            - bigquery: return as bigquery tables 
+            - json: return as JSON
+            - tsv: return as a table in TSV
+          type: string
+          enum: [bigquery, json, tsv]
+        offset:
+          description: Pagination offset
+          type: integer
+        limit:
+          description: Pagination size
+          type: integer
+        previous_url:
+          type: string
+        next_url:
+          type: string
+
     Result:
       type: object
       required:
@@ -415,9 +440,11 @@ components:
       properties:
         queryid:
           $ref: '#/components/schemas/QueryId'
-        summary:
-          type: object
-        analysis:
-          type: object
         result:
           type: object
+
+    ResultSummary:
+      type: object
+
+    QueryAnalysis:
+      type: object
