@@ -1,0 +1,120 @@
+@startuml basicflow
+
+interface "BigQuery Table" as BQ
+interface "TSV" as tsv
+interface "Abstract\nQuery" as AQ
+interface "Summary" as summary
+interface "Analysis" as analysis
+
+database "Backend" as back1
+component API as api1
+
+AQ --> [api1]
+note right of AQ
+User sees data as single logical
+table on which to do chains of
+boolean queries. Column names
+same as CCDH harmonized names.
+
+Query expressed in stable format,
+independent of internal structure 
+of CDA database.
+end note
+
+api1 --> [BQ]
+api1 --> [tsv]
+api1 --> [summary]
+api1 --> [analysis]
+
+api1 --> [back1]
+[back1] --> api1
+
+@enduml
+
+
+
+@startuml horizontalextension
+
+interface "BigQuery Table" as BQ
+interface "TSV" as tsv
+interface "Abstract\nQuery" as AQ
+interface "Summary" as summary
+interface "Analysis" as analysis
+
+node "Custom CDA" {
+
+database "Backend" as back1
+component API as api1
+
+AQ --> [api1]
+api1 --> [BQ]
+api1 --> [tsv]
+api1 --> [summary]
+api1 --> [analysis]
+
+api1 --> [back1]
+[back1] --> api1
+
+}
+
+node "CDA" {
+
+database "Backend" as back2
+component API as api2
+
+api1 --> [api2]
+api2 --> [api1]
+api2 --> [back2]
+[back2] --> api2
+
+}
+
+@enduml
+
+
+
+@startuml CDA
+
+interface "Abstract\nQuery" as AQ
+interface "BiqQuery SQL" as sql
+interface "BigQuery Table" as BQ
+interface "TSV" as tsv
+interface "Summary" as summary
+interface "Analysis" as analysis
+
+database "Backend" as back1
+component Translator as qtrans
+component Analyzer as ana
+
+AQ --> [qtrans]
+[qtrans] --> sql
+sql --> back1
+
+
+back1 --> [BQ]
+back1 --> [tsv]
+
+back1 --> [ana]
+
+ana --> [summary]
+ana --> [analysis]
+
+note right of qtrans
+Abstract query translated
+algorithmically to SQL 
+resolving joins and any other
+database structure specific
+requirements. 
+end note
+
+
+note right of ana
+Computes summary statistics 
+of result if desired.
+
+Performs time/cost/space 
+analysis of query if
+desired.
+end note
+
+@enduml
