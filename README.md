@@ -1,5 +1,16 @@
 # CDA API Design and design documents
 
+## Basic architecture
+![](images/basicflow.png)
+
+## Detail architecture
+![](images/CDA.png)
+
+## Extension architecture
+![](images/horizontalextension.png)
+
+## Specification
+
 [API specification in OpenAPI 3.0](api-definition.yml)
 
 _The API is specified using [OpenAPI 3.0](http://spec.openapis.org/oas/v3.0.3)
