@@ -20,6 +20,32 @@ of web viewers. It is a text based format and can also be read on its own_
 ![](query-horizontal-extension.png)
 
 
+# Generating documentation and clients/servers
+
+
+```
+brew install openapi-generator
+```
+
+## Generate documentation
+
+```
+openapi-generator generate -i api-design/api-definition.yml -g html2 -o api-design/html
+```
+
+
+## Generate client
+
+```
+openapi-generator generate -i api-design/api-definition.yml -g python -o client-prototype
+```
+
+## Generate server stub
+```
+openapi-generator generate -i api-design/api-definition.yml -g python-flask -o server-prototype
+```
+
+
 # Example API calls in pseudo code
 
 ```
