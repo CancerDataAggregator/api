@@ -14,9 +14,13 @@ jobs:
           mkdir ~/.npm-global
           npm config set prefix '~/.npm-global'
           export PATH=~/.npm-global/bin:$PATH
+          
           npm install @openapitools/openapi-generator-cli -g
           openapi-generator generate -i api-definition.yml -g html2 -o html
-          
+
+          npm install redoc-cli -g
+          redoc-cli bundle api-definition.yml -o html/api-redoc-static.html
+
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@3.6.2
         with:
