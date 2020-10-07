@@ -1,0 +1,84 @@
+@startuml iterative-userflow
+
+:Anyonymous query;
+:
+
+
+
+@enduml
+
+@startuml detail-userflow
+
+start
+fork
+    :Faceted query;
+fork again
+    :Canned query;
+fork again
+    :Bare SQL;
+fork again
+    :Standard search\nformat;
+note right
+Long term plan, not for MVP
+
+Depends on wider community
+agreeing to a search/query
+standard
+end note
+end fork
+
+:CDA translates to SQL;
+:CDA attaches query id;
+note right
+Not for MVP
+This adds state to CDA
+but makes it very powerful
+end note
+
+if (just summary?) then (yes)
+    :Summary stats;
+    note left
+    For MVP only basic stats
+    like row count (if that)
+
+    For release: 
+    Canned biologically relevant stats
+
+    For V2: 
+    User configurable stats.
+    end note
+    stop
+elseif (analysis?) then (yes)
+    :Predictive\ntime/space/cost\nanalysis;
+    note left
+    Not for MVP
+    end note
+    stop
+elseif (fetch?) then (yes)
+    if (timeout?) then (yes)
+        :Return query id\nwith check back later\nmessage;
+        note left
+        Not for MVP
+        Requires queryid 
+        and state
+        end note
+        stop
+    endif
+
+    :CDA indicates which\ndata has been censored\ndue to auth;
+    if (BiqQuery?) then (yes)
+        :return link to BQ table;
+        note left
+        What about users with no 
+        google account?
+        end note
+    elseif (TSV?) then (yes)
+        :return data in TSV; 
+    endif
+
+endif
+stop
+
+
+
+@endmul
