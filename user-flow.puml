@@ -1,9 +1,6 @@
 @startuml iterative-userflow
 
 :Anyonymous query;
-:
-
-
 
 @enduml
 
