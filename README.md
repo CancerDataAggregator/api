@@ -2,6 +2,16 @@
 
 ![](images/detail-userflow.png)
 
+## Specification
+
+- [Human readable specification](https://cancerdataaggregator.github.io/api/)
+- [OpenAPI generator
+version](https://cancerdataaggregator.github.io/api/openapi-gen) (Has it's own charm)
+- [API specification in OpenAPI 3.0](api-definition.yml)
+
+_The API is specified using [OpenAPI 3.0](http://spec.openapis.org/oas/v3.0.3)
+syntax._
+
 ## Basic architecture
 ![](images/basicflow.png)
 
@@ -10,16 +20,6 @@
 
 ## Extension architecture
 ![](images/horizontalextension.png)
-
-## Specification
-
-[API specification in OpenAPI 3.0](api-definition.yml)
-
-_The API is specified using [OpenAPI 3.0](http://spec.openapis.org/oas/v3.0.3)
-syntax. It can be pre-viewed using VS Code plugins, or on the web with a variety
-of web viewers. It is a text based format and can also be read on its own_
-
-![](query-horizontal-extension.png)
 
 
 # Generating documentation and clients/servers
