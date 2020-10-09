@@ -1,9 +1,3 @@
-@startuml iterative-userflow
-
-:Anyonymous query;
-
-@enduml
-
 @startuml detail-userflow
 
 start
@@ -30,6 +24,21 @@ note right
 Not for MVP
 This adds state to CDA
 but makes it very powerful
+end note
+
+:Access control;
+note right
+Users can retireve open data
+without authentication or 
+authorization.
+
+Users need to authenticate and
+authorize to access controlled
+data.
+
+The query will only run on a 
+view of the data the user is 
+authorized for.
 end note
 
 if (just summary?) then (yes)
