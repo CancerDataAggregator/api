@@ -1,5 +1,7 @@
 # CDA API Design and design documents
 
+![](images/detail-userflow.png)
+
 ## Basic architecture
 ![](images/basicflow.png)
 
